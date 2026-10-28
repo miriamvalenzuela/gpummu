@@ -1,0 +1,271 @@
+./gpummu trace.tr 8 8 4
+Page size: 4096 bytes
+KV-cache accesses processed: 224449
+TLB hits: 0, Page table hits: 222566, Total hits: 222566, Misses: 1883
+Total hit percentage: 99.16%, miss percentage: 0.84%
+Physical pages mapped: 1883
+Number of page table entries: 33728
+
+./gpummu -o bitmasks trace.tr 4 8 8
+Bitmasks
+level 0 mask F0000000
+level 1 mask 0FF00000
+level 2 mask 000FF000
+
+./gpummu -n 30 -o offset trace.tr 8 8 4
+00000760
+00000780
+00000740
+000002C0
+00000900
+00000900
+000008A0
+000000A0
+00000110
+00000160
+000004F8
+00000500
+00000520
+000005A0
+000005A0
+00000DD0
+000005E0
+00000F10
+00000620
+00000620
+00000640
+00000F20
+000004C0
+00000FA0
+00000FA0
+00000460
+000000C0
+000000E5
+00000F10
+00000BE0
+
+./gpummu -n 20 -o vpn2ppn trace.tr 6 4 8
+0 1 7 -> 0
+0 1 7 -> 0
+0 1 7 -> 0
+4 7 D7 -> 1
+1 7 9E -> 2
+4 C 9C -> 3
+0 1 1D -> 4
+0 1 28 -> 5
+0 1 27 -> 6
+0 1 27 -> 6
+0 1 13 -> 7
+0 1 13 -> 7
+1 D 13 -> 8
+0 1 13 -> 7
+E 2 29 -> 9
+1 D 13 -> 8
+0 1 13 -> 7
+1 C F -> A
+0 1 13 -> 7
+7 5 25 -> B
+
+./gpummu -n 20 -o va2pa trace.tr 20
+0041F760 -> 00000760
+0041F780 -> 00000780
+0041F740 -> 00000740
+11F5E2C0 -> 000012C0
+05E78900 -> 00002900
+13270900 -> 00003900
+004758A0 -> 000048A0
+004A30A0 -> 000050A0
+0049E110 -> 00006110
+0049E160 -> 00006160
+0044E4F8 -> 000074F8
+0044E500 -> 00007500
+0744E520 -> 00008520
+0044E5A0 -> 000075A0
+388A65A0 -> 000095A0
+0744EDD0 -> 00008DD0
+0044E5E0 -> 000075E0
+0703FF10 -> 0000AF10
+0044E620 -> 00007620
+1D496620 -> 0000B620
+
+./gpummu -n 20 -c 5 -o va2pa_tlb_ptwalk trace.tr 4 8 6
+0041F760 -> 00003760, tlb miss, pagetable miss
+0041F780 -> 00003780, tlb hit
+0041F740 -> 00003740, tlb hit
+11F5E2C0 -> 000062C0, tlb miss, pagetable miss
+05E78900 -> 00008900, tlb miss, pagetable miss
+13270900 -> 0000C900, tlb miss, pagetable miss
+004758A0 -> 000118A0, tlb miss, pagetable miss
+004A30A0 -> 000170A0, tlb miss, pagetable miss
+0049E110 -> 0001A110, tlb miss, pagetable miss
+0049E160 -> 0001A160, tlb hit
+0044E4F8 -> 0001E4F8, tlb miss, pagetable miss
+0044E500 -> 0001E500, tlb hit
+0744E520 -> 00022520, tlb miss, pagetable miss
+0044E5A0 -> 0001E5A0, tlb hit
+388A65A0 -> 000265A0, tlb miss, pagetable miss
+0744EDD0 -> 00022DD0, tlb hit
+0044E5E0 -> 0001E5E0, tlb hit
+0703FF10 -> 0002BF10, tlb miss, pagetable miss
+0044E620 -> 0001E620, tlb hit
+1D496620 -> 0002E620, tlb miss, pagetable miss
+
+./gpummu -n 8000 -o summary trace.tr 24
+Page size: 256 bytes
+KV-cache accesses processed: 8000
+TLB hits: 0, Page table hits: 6417, Total hits: 6417, Misses: 1583
+Total hit percentage: 80.21%, miss percentage: 19.79%
+Physical pages mapped: 1583
+Number of page table entries: 16777216
+
+./gpummu -n 150 -c 16 -o va2pa_tlb_ptwalk trace.tr 4 8 6
+0041F760 -> 00003760, tlb miss, pagetable miss
+0041F780 -> 00003780, tlb hit
+0041F740 -> 00003740, tlb hit
+11F5E2C0 -> 000062C0, tlb miss, pagetable miss
+05E78900 -> 00008900, tlb miss, pagetable miss
+13270900 -> 0000C900, tlb miss, pagetable miss
+004758A0 -> 000118A0, tlb miss, pagetable miss
+004A30A0 -> 000170A0, tlb miss, pagetable miss
+0049E110 -> 0001A110, tlb miss, pagetable miss
+0049E160 -> 0001A160, tlb hit
+0044E4F8 -> 0001E4F8, tlb miss, pagetable miss
+0044E500 -> 0001E500, tlb hit
+0744E520 -> 00022520, tlb miss, pagetable miss
+0044E5A0 -> 0001E5A0, tlb hit
+388A65A0 -> 000265A0, tlb miss, pagetable miss
+0744EDD0 -> 00022DD0, tlb hit
+0044E5E0 -> 0001E5E0, tlb hit
+0703FF10 -> 0002BF10, tlb miss, pagetable miss
+0044E620 -> 0001E620, tlb hit
+1D496620 -> 0002E620, tlb miss, pagetable miss
+0044E640 -> 0001E640, tlb hit
+00414F20 -> 00030F20, tlb miss, pagetable miss
+074AE4C0 -> 000364C0, tlb miss, pagetable miss
+004BCFA0 -> 00038FA0, tlb miss, pagetable miss
+19F9CFA0 -> 0003CFA0, tlb miss, pagetable miss
+00446460 -> 00042460, tlb miss, pagetable miss
+004520C0 -> 000460C0, tlb miss, pagetable miss
+1331A0E5 -> 0004A0E5, tlb miss, pagetable miss
+0700FF10 -> 0004FF10, tlb miss, pagetable miss
+004A0BE0 -> 00014BE0, tlb hit
+074BFFB0 -> 00053FB0, tlb miss, pagetable miss
+0616BE00 -> 00057E00, tlb miss, pagetable miss
+004A9840 -> 00059840, tlb miss, pagetable miss
+074B7660 -> 0005F660, tlb miss, pagetable miss
+00497778 -> 00063778, tlb miss, pagetable miss
+00497780 -> 00063780, tlb hit
+2FE40880 -> 00064880, tlb miss, pagetable miss
+004B39E0 -> 0006B9E0, tlb miss, pagetable miss
+05AD7880 -> 0006F880, tlb miss, pagetable miss
+004953B0 -> 000613B0, tlb hit
+004AE4E0 -> 000724E0, tlb miss, pagetable miss
+00497738 -> 00063738, tlb hit
+1F2A7720 -> 00077720, tlb miss, pagetable miss
+00497740 -> 00063740, tlb hit
+1B2A7740 -> 0007B740, tlb miss, pagetable miss
+07967020 -> 0007F020, tlb miss, pagetable miss
+07991840 -> 00081840, tlb miss, pagetable miss
+079918C0 -> 000818C0, tlb hit
+17699920 -> 00085920, tlb miss, pagetable miss
+07967D40 -> 0007FD40, tlb hit
+088E4C00 -> 00088C00, tlb miss, pagetable miss
+1702FF70 -> 0008FF70, tlb miss, pagetable miss
+088C1A20 -> 00091A20, tlb miss, pagetable miss
+088C1A40 -> 00091A40, tlb hit
+0F8C5E70 -> 00095E70, tlb miss, pagetable miss
+088C1A80 -> 00091A80, tlb hit
+133B1A80 -> 00099A80, tlb miss, pagetable miss
+134B1AA1 -> 0009DAA1, tlb miss, pagetable miss
+088C1AC0 -> 00091AC0, tlb hit
+088C1AE0 -> 00091AE0, tlb hit
+079911B0 -> 000811B0, tlb miss, pagetable hit
+079955C0 -> 000A15C0, tlb miss, pagetable miss
+004709A8 -> 000A49A8, tlb miss, pagetable miss
+00470888 -> 000A4888, tlb hit
+00497940 -> 00063940, tlb miss, pagetable hit
+3462F940 -> 000AB940, tlb miss, pagetable miss
+00497960 -> 00063960, tlb hit
+00497980 -> 00063980, tlb hit
+07E7FD80 -> 000AFD80, tlb miss, pagetable miss
+004979A0 -> 000639A0, tlb hit
+0044C0E0 -> 0001C0E0, tlb miss, pagetable hit
+004B3960 -> 0006B960, tlb miss, pagetable hit
+353E3960 -> 000B3960, tlb miss, pagetable miss
+004979C0 -> 000639C0, tlb hit
+004979E0 -> 000639E0, tlb hit
+00497A00 -> 00063A00, tlb hit
+00497A20 -> 00063A20, tlb hit
+00497A40 -> 00063A40, tlb hit
+0048D7C0 -> 000B57C0, tlb miss, pagetable miss
+00497A80 -> 00063A80, tlb hit
+074BFF98 -> 00053F98, tlb miss, pagetable hit
+00497AA0 -> 00063AA0, tlb hit
+1AB27AC1 -> 000BBAC1, tlb miss, pagetable miss
+00497AE0 -> 00063AE0, tlb hit
+0702FF11 -> 000BFF11, tlb miss, pagetable miss
+004AF600 -> 00073600, tlb miss, pagetable hit
+3A34F600 -> 000C3600, tlb miss, pagetable miss
+074AF630 -> 00037630, tlb miss, pagetable hit
+004AF640 -> 00073640, tlb hit
+074BFE70 -> 00053E70, tlb hit
+004AF680 -> 00073680, tlb hit
+004AF6A0 -> 000736A0, tlb hit
+0670F6A0 -> 000C76A0, tlb miss, pagetable miss
+0702FF05 -> 000BFF05, tlb hit
+004955A0 -> 000615A0, tlb hit
+004181D8 -> 000C81D8, tlb miss, pagetable miss
+1C7955A0 -> 000CD5A0, tlb miss, pagetable miss
+0741FFF0 -> 000D3FF0, tlb miss, pagetable miss
+0741FF10 -> 000D3F10, tlb hit
+00418220 -> 000C8220, tlb hit
+00418240 -> 000C8240, tlb hit
+004182B0 -> 000C82B0, tlb hit
+157D82A0 -> 000D42A0, tlb miss, pagetable miss
+004182C0 -> 000C82C0, tlb hit
+177DC6C0 -> 000D86C0, tlb miss, pagetable miss
+004182E0 -> 000C82E0, tlb hit
+00418260 -> 000C8260, tlb hit
+05B292E8 -> 000DD2E8, tlb miss, pagetable miss
+05B40708 -> 000E0708, tlb miss, pagetable miss
+05B29300 -> 000DD300, tlb hit
+0700FF10 -> 0004FF10, tlb miss, pagetable hit
+1B2A7860 -> 0007B860, tlb miss, pagetable hit
+157D8280 -> 000D4280, tlb hit
+00452150 -> 00046150, tlb miss, pagetable hit
+00452160 -> 00046160, tlb hit
+16C62160 -> 000E6160, tlb miss, pagetable miss
+0701FF10 -> 000EBF10, tlb miss, pagetable miss
+0613A180 -> 000EE180, tlb miss, pagetable miss
+004521A0 -> 000461A0, tlb hit
+004521C0 -> 000461C0, tlb hit
+00452200 -> 00046200, tlb hit
+0745EE30 -> 000F2E30, tlb miss, pagetable miss
+0745FE50 -> 000F3E50, tlb hit
+00452260 -> 00046260, tlb hit
+00452280 -> 00046280, tlb hit
+05AD6008 -> 0006E008, tlb miss, pagetable hit
+38826000 -> 000F6000, tlb miss, pagetable miss
+004955C0 -> 000615C0, tlb miss, pagetable hit
+3C2055C0 -> 000F95C0, tlb miss, pagetable miss
+0049CA20 -> 00018A20, tlb hit
+0049CA40 -> 00018A40, tlb hit
+07469AC8 -> 000FDAC8, tlb miss, pagetable miss
+11D5F1E0 -> 001031E0, tlb miss, pagetable miss
+2611F1E1 -> 001071E1, tlb miss, pagetable miss
+121DD6C0 -> 001096C0, tlb miss, pagetable miss
+1C795FA0 -> 000CDFA0, tlb miss, pagetable hit
+121DDFC0 -> 00109FC0, tlb hit
+13B1DFE0 -> 0010DFE0, tlb miss, pagetable miss
+0701FF15 -> 000EBF15, tlb hit
+11F5E040 -> 00006040, tlb hit
+003FE040 -> 00112040, tlb miss, pagetable miss
+121DDF60 -> 00109F60, tlb hit
+0700FF10 -> 0004FF10, tlb miss, pagetable hit
+171DDF08 -> 00115F08, tlb miss, pagetable miss
+00420CE8 -> 00118CE8, tlb miss, pagetable miss
+00420D40 -> 00118D40, tlb hit
+0741EDD8 -> 000D2DD8, tlb miss, pagetable hit
+0041E9E0 -> 000029E0, tlb hit
+0041EA00 -> 00002A00, tlb hit
+00420D60 -> 00118D60, tlb hit

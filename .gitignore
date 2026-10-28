@@ -1,0 +1,4 @@
+*.o
+gpummu
+actual_*.txt
+.assessme/
