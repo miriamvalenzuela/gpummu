@@ -36,6 +36,7 @@ struct PageTable {
 
     unsigned int offsetBits = 0;
     unsigned int offsetMask = 0;
+    unsigned int pageSize = 0;
     // The next physical page assigned during the demand paging. 
     unsigned int nextPpn = 0;
 
@@ -48,6 +49,16 @@ void initializePageTable(PageTable& pageTable, const unsigned int levelBits[], u
 
 // Applies a mask and shift to extract a page-table index.
 unsigned int extractPageNumberFromAddress(unsigned int virtualAddress, unsigned int mask, unsigned int shift);
+
+// Searces the tree for an existing VPN to PPN mapping.
+Map* lookup_vpn2ppn(PageTable* pageTable, unsigned int virtualAddress);
+
+// Inserts a new VPN to PPN mapping into the page table tree.
+void insert_vpn2ppn(
+    PageTable* pageTable,
+    unsigned int virtualAddress,
+    unsigned int ppn
+);
 
 // Releases any metadata arrays that got allocated during initialization.
 void destroyPageTable(PageTable& pageTable);
