@@ -14,6 +14,7 @@
 #include "log.h"
 #include "pagetable.h"
 #include "translationlookasidebuffer.h"
+#include "tracereader.h"
 
 using namespace std;
 
@@ -182,6 +183,88 @@ bool parseArguments(int argc, char* argv[], ProgramOptions& options) {
     return true; 
 }
 
+// Logs the page-table indexes and mapped physical page. 
+void logVpnMapping(const PageTable& pageTable, unsigned int virtualAddress, unsigned int ppn) {
+    vector<uint32_t> pages(pageTable.levelCount);
+
+    for (unsigned int level = 0; level < pageTable.levelCount; level++) {
+        pages[level] = extractPageNumberFromAddress(virtualAddress, pageTable.bitMaskAry[level], pageTable.shiftAry[level]);
+    }
+
+    log_pagemapping(static_cast<int>(pageTable.levelCount), pages.data(), ppn);
+}
+
+// Processes trace addresses using demand paging. 
+void processTrace(FILE* traceFile, PageTable& pageTable, const ProgramOptions& options) {
+    p2AddrTr trace; 
+
+    unsigned int addressesProcessed = 0; 
+    unsigned int pageTableHits = 0; 
+
+    while ((!options.hasAccessLimit || addressesProcessed < options.accessLimit) && NextAddress(traceFile, &trace)) {
+        // Pull out the virtual address
+        unsigned int virtualAddress = trace.addr; 
+
+        // Look for VPN in the page table
+        Map* mapping = lookup_vpn2ppn(&pageTable, virtualAddress);
+
+        if (mapping != nullptr) {
+            pageTableHits++;
+        } else {
+            // A new VPN receives the next sequential physical page. 
+            unsigned int assignedPpn = pageTable.nextPpn;
+
+            insert_vpn2ppn(&pageTable, virtualAddress, assignedPpn);
+
+            pageTable.nextPpn++;
+
+            // Retrieve the inserted mapping
+            mapping = lookup_vpn2ppn(&pageTable, virtualAddress);
+
+        }
+
+        // Keep only the offset portion of the virtual address. 
+        unsigned int offset = virtualAddress & pageTable.offsetMask;
+
+        unsigned int physicalAddress = (mapping->ppn << pageTable.offsetBits) | offset; 
+
+        switch (options.outputMode) {
+            case OutputMode::OFFSET:
+                hexnum(offset);
+                break;
+
+            case OutputMode::VPN2PPN:
+                logVpnMapping(pageTable, virtualAddress, mapping->ppn); 
+                break;
+
+            case OutputMode::VA2PA:
+                log_virtualAddr2physicalAddr(virtualAddress, physicalAddress);
+                break;
+
+            case OutputMode::VA2PA_TLB_PTWALK:
+                // TODO: Add with TLB integration.
+                break;
+
+            case OutputMode::SUMMARY:
+                // Summary is printed once after processing the trace.
+                break; 
+
+            case OutputMode::BITMASKS:
+                // Bitmask mode returns before trace processing.
+                break;
+
+            default:
+                break;
+        }
+
+        addressesProcessed++;
+    }
+
+    if (options.outputMode == OutputMode::SUMMARY) {
+        log_summary(pageTable.pageSize, 0, pageTableHits, addressesProcessed, pageTable.nextPpn, pageTable.pageTableEntries);
+    }
+}
+
 int main(int argc, char* argv[]) {
     ProgramOptions options;
 
@@ -197,8 +280,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    fclose(traceFile);
-
     PageTable pageTable;
 
     initializePageTable (
@@ -213,7 +294,16 @@ int main(int argc, char* argv[]) {
             static_cast<int>(pageTable.levelCount),
             pageTable.bitMaskAry
         );
+
+        fclose(traceFile);
+        destroyPageTable(pageTable);
+
+        return 0;
     }
+
+    processTrace(traceFile, pageTable, options);
+
+    fclose(traceFile);
 
     destroyPageTable(pageTable);
 

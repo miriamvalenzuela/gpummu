@@ -11,7 +11,7 @@ PROGRAM = gpummu
 $(PROGRAM): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(PROGRAM) $(OBJS)
 
-main.o: main.cpp pagetable.h translationlookasidebuffer.h log.h
+main.o: main.cpp pagetable.h translationlookasidebuffer.h log.h tracereader.h
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 pagetable.o: pagetable.cpp pagetable.h
