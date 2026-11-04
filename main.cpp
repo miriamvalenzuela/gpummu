@@ -13,6 +13,7 @@
 
 #include "log.h"
 #include "pagetable.h"
+#include "translationlookasidebuffer.h"
 
 using namespace std;
 
