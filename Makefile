@@ -23,7 +23,7 @@ log.o: log.cpp log.h
 tracereader.o: tracereader.cpp tracereader.h
 	$(CXX) $(CXXFLAGS) -c tracereader.cpp
 
-translationlookasidebuffer.o: translationlookasidebuffer.cpp translationlookasidebuffer.h
+translationlookasidebuffer.o: translationlookasidebuffer.cpp translationlookasidebuffer.h pagetable.h
 	$(CXX) $(CXXFLAGS) -c translationlookasidebuffer.cpp
 
 clean:

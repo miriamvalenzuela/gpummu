@@ -4,6 +4,8 @@
 #ifndef PAGETABLE_H
 #define PAGETABLE_H
 
+#define ADDRESS_BITS 32
+
 // Represents one valid VPN to physical page mapping at a leaf node.
 struct Map {
     unsigned int ppn = 0;

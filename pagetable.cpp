@@ -41,7 +41,6 @@ void initializePageTable(
     const unsigned int levelBits[],
     unsigned int levelCount
 ) {
-    constexpr unsigned int addressBits = 32; 
 
     pageTable.levelCount = levelCount;
 
@@ -55,7 +54,7 @@ void initializePageTable(
         usedBits += levelBits[level];
 
         // Any bits below the current level determine how far its index is shifted.
-        unsigned int shift = addressBits - usedBits; 
+        unsigned int shift = ADDRESS_BITS - usedBits; 
 
         pageTable.shiftAry[level] = shift; 
     
@@ -69,7 +68,7 @@ void initializePageTable(
         pageTable.entryCount[level] = 1u << levelBits[level]; 
     }
 
-    pageTable.offsetBits = addressBits - usedBits;
+    pageTable.offsetBits = ADDRESS_BITS - usedBits;
 
     // Offset is everything below the full VPN.
     pageTable.offsetMask = (1u << pageTable.offsetBits) - 1u; 

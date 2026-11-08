@@ -1,5 +1,5 @@
-// Name: Miriam Valenzuela
-// Red ID: 131786119
+// Name: Miriam Valenzuela, Jesus Hernandez
+// Red ID: 131786119, 131481477
 
 #include <string>
 #include <vector>
@@ -15,6 +15,9 @@
 #include "pagetable.h"
 #include "translationlookasidebuffer.h"
 #include "tracereader.h"
+
+#define DECIMAL_BASE 10
+#define MAX_PAGETABLE_BITS 28
 
 using namespace std;
 
@@ -46,7 +49,7 @@ bool parsePositiveNumber(const char* text, unsigned int& result) {
 
     char* end = nullptr; 
 
-    long value = strtol(text, &end, 10);
+    long value = strtol(text, &end, DECIMAL_BASE);
 
     if (errno != 0 
         || end == text 
@@ -67,7 +70,7 @@ bool parseNonNegativeNumber(const char* text, unsigned int& result) {
 
     char* end = nullptr;
 
-    long value = strtol(text, &end, 10);
+    long value = strtol(text, &end, DECIMAL_BASE);
 
     if (errno != 0 ||
         end == text ||
@@ -153,8 +156,6 @@ bool parseArguments(int argc, char* argv[], ProgramOptions& options) {
 
     options.tracePath = argv[optind];
 
-    constexpr unsigned int maxPageTableBits = 28;
-
     unsigned int totalBits = 0; 
     unsigned int level = 0; 
 
@@ -170,13 +171,13 @@ bool parseArguments(int argc, char* argv[], ProgramOptions& options) {
 
         options.levelBits.push_back(bits);
 
-        totalBits += bits;
-
-        if (totalBits > maxPageTableBits) {
+        // Prevent overflow with absurdly large values
+        if (bits > MAX_PAGETABLE_BITS - totalBits) {
             cout << "Too many bits used in page tables\n";
             return false;
         }
-
+        
+        totalBits += bits;
         level++;
     }
 
@@ -194,33 +195,45 @@ void logVpnMapping(const PageTable& pageTable, unsigned int virtualAddress, unsi
     log_pagemapping(static_cast<int>(pageTable.levelCount), pages.data(), ppn);
 }
 
-// Processes trace addresses using demand paging. 
-void processTrace(FILE* traceFile, PageTable& pageTable, const ProgramOptions& options) {
+// Processes trace addresses using TLB and demand paging. 
+void processTrace(FILE* traceFile, PageTable& pageTable, TranslationLookasideBuffer tlbCache, const ProgramOptions& options) {
     p2AddrTr trace; 
 
     unsigned int addressesProcessed = 0; 
-    unsigned int pageTableHits = 0; 
+    unsigned int pageTableHits      = 0; 
+    unsigned int tlbHits            = 0;
 
     while ((!options.hasAccessLimit || addressesProcessed < options.accessLimit) && NextAddress(traceFile, &trace)) {
         // Pull out the virtual address
         unsigned int virtualAddress = trace.addr; 
 
-        // Look for VPN in the page table
-        Map* mapping = lookup_vpn2ppn(&pageTable, virtualAddress);
+        bool tlbHit       = false;
+        bool pageTableHit = false;
 
-        if (mapping != nullptr) {
-            pageTableHits++;
-        } else {
-            // A new VPN receives the next sequential physical page. 
-            unsigned int assignedPpn = pageTable.nextPpn;
+        // Look for VPN in TLB cache first (if one is specified)
+        Map* mapping = tlbCache.fetch(virtualAddress, pageTable.offsetBits);
 
-            insert_vpn2ppn(&pageTable, virtualAddress, assignedPpn);
+        // Found in TLB cache
+        if (mapping != nullptr) 
+        {
+            tlbHit = true;
+            tlbHits++;
+        }
 
-            pageTable.nextPpn++;
+        // Not found in TLB cache; look in page table instead.
+        else
+        {
+            mapping = tlbCache.fetch_from_pagetable(virtualAddress, pageTable.offsetBits, &pageTable);
 
-            // Retrieve the inserted mapping
-            mapping = lookup_vpn2ppn(&pageTable, virtualAddress);
+            // Found in page table
+            if (mapping != nullptr)
+            {
+                pageTableHit = true;
+                pageTableHits++;
+            }
 
+            // ...or it was neither in TLB nor the page table, and it was inserted with the previous lookup.
+            else mapping = lookup_vpn2ppn(&pageTable, virtualAddress);
         }
 
         // Keep only the offset portion of the virtual address. 
@@ -242,7 +255,7 @@ void processTrace(FILE* traceFile, PageTable& pageTable, const ProgramOptions& o
                 break;
 
             case OutputMode::VA2PA_TLB_PTWALK:
-                // TODO: Add with TLB integration.
+                log_va2pa_TLB_PTwalk(virtualAddress, physicalAddress, tlbHit, pageTableHit);
                 break;
 
             case OutputMode::SUMMARY:
@@ -261,7 +274,7 @@ void processTrace(FILE* traceFile, PageTable& pageTable, const ProgramOptions& o
     }
 
     if (options.outputMode == OutputMode::SUMMARY) {
-        log_summary(pageTable.pageSize, 0, pageTableHits, addressesProcessed, pageTable.nextPpn, pageTable.pageTableEntries);
+        log_summary(pageTable.pageSize, tlbHits, pageTableHits, addressesProcessed, pageTable.nextPpn, pageTable.pageTableEntries);
     }
 }
 
@@ -288,6 +301,8 @@ int main(int argc, char* argv[]) {
         static_cast<unsigned int>(options.levelBits.size())
     );
 
+    TranslationLookasideBuffer tlbCache(options.tlbCapacity);
+
     // Bitmaks mode only needs the page-table configuration. 
     if (options.outputMode == OutputMode::BITMASKS) {
         log_bitmasks(
@@ -301,7 +316,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    processTrace(traceFile, pageTable, options);
+    processTrace(traceFile, pageTable, tlbCache, options);
 
     fclose(traceFile);
 
